@@ -1,0 +1,23 @@
+{
+  "name": "projectmanager",
+  "version": "1.0.0",
+  "description": "A project manager api backend endpoint",
+  "keywords": [
+    "api",
+    "creation",
+    "backend",
+    "project",
+    "project",
+    "manager"
+  ],
+  "license": "ISC",
+  "author": "Joe Pemor",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "devDependencies": {
+    "prettier": "3.9.7"
+  }
+}
