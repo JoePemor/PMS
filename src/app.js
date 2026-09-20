@@ -24,3 +24,5 @@ app.get('/', (req, res) => {
 });
 
 export default app;
+
+// app.js handles builds/configs of the Express application
