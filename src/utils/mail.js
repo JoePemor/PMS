@@ -1,18 +1,17 @@
 import Mailgen from "mailgen";
 import nodemailer from "nodemailer";
 
+/**
+ * the data that the object {option: params of sendMail} should carry 
+ * 
+ *  const options = {
+      email: "ldjoe3998@gmail.com",
+      subject: "Hello from Project Manager",
+      mailgenContent: mailgenContent,
+    };
+*/
+
 const sendMail = async (option) => {
-
-  /**
-   * the data that the object {option: params of sendMail} should carry 
-   * 
-   *  const options = {
-        email: "ldjoe3998@gmail.com",
-        subject: "Hello from Project Manager",
-        mailgenContent: mailgenContent,
-      };
-   */
-
   const mailGenerator = new Mailgen({
     theme: "default",
     product: {
