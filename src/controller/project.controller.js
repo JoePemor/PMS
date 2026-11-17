@@ -80,14 +80,7 @@ const deleteProject = asyncHandler(async (req, res) => {
   if (!deletedTasks) {
     throw new ApiError(404, "project tasks not found", []);
   }
-
-  const deletedSubTasks = await SubTask.deleteMany({
-    project: projectId,
-  });
-
-  if (!deletedSubTasks) {
-    throw new ApiError(404, "project subtasks not found", []);
-  }
+  
 
   return res.status(200).json(
     new ApiResponse(
