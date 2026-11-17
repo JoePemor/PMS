@@ -1,0 +1,54 @@
+                         AUTH SYSTEM
+                              │
+       ┌──────────────────────┼──────────────────────┐
+       │                      │                      │
+   REGISTRATION             LOGIN                RECOVERY
+       │                      │                      │
+       ▼                      ▼                      ▼
+ Validate                Credentials          Forgot password
+       │                      │                      │
+       ▼                      ▼                      ▼
+ Hash password          Verify password       Reset mechanism
+       │                      │
+       ▼                      ▼
+ Create user             Issue tokens
+       │                      │
+       ▼                      ▼
+ OTP verification      Set secure cookies
+       │
+       ▼
+ Verified account
+
+
+                    PROTECTED REQUEST
+                           │
+                           ▼
+                     Access Token
+                           │
+                    ┌──────┴──────┐
+                    │             │
+                 Valid          Expired
+                    │             │
+                    ▼             ▼
+              Verify user     Refresh flow
+                    │             │
+                    ▼             ▼
+              Authorization   New access token
+                    │
+                    ▼
+                  Route
+
+
+             SECURITY LAYER
+                    │
+       ┌────────────┼────────────┐
+       │            │            │
+      CSRF         OTP        Rate limits
+       │            │            │
+    Cookies      Expiry       Abuse control
+       │            │
+    SameSite     Attempts
+       │
+    Origin
+
+so i think it should not be more than 6 wrong attempts before we kill like the otp resend  and i will lean towards that once new otp is generated we hash and store in data base with bcrypt or like crypto i want to know their difference two and i thin a min sounds less if you think about it lets make it 3min that if you agree with me, so i think i have given potiential solution to all ur problems concerning this 
