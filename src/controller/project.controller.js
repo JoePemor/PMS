@@ -3,7 +3,6 @@ import { Project } from "../models/project.models.js";
 import { ProjectMember } from "../models/projectmember.models.js";
 import { Note } from "../models/note.models.js";
 import { Task } from "../models/task.models.js";
-import { SubTask } from "../models/subtask.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
@@ -80,7 +79,6 @@ const deleteProject = asyncHandler(async (req, res) => {
   if (!deletedTasks) {
     throw new ApiError(404, "project tasks not found", []);
   }
-  
 
   return res.status(200).json(
     new ApiResponse(
@@ -135,15 +133,61 @@ const updateProject = asyncHandler(async (req, res) => {
     );
 });
 
+const getProjects = asyncHandler(async (req, res) => {
+  const project = await ProjectMember.aggregate([
+    {
+      $match: {
+        user: new mongoose.Types.ObjectId(req.user?._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "projects",
+        localField: "project",
+        foreignField: "_id",
+        as: "projects",
+        pipeline: [
+          {
+            $lookup: {
+              from: "projectmembers",
+              localField: "_id",
+              foreignField: "project",
+              as: "projectmembers",
+            },
+          },
+          {
+            $addfields: {
+              members: {
+                $size: "$projectmembers",
+              },
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unwind: "$project",
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        description: 1,
+        members: 1,
+        createdAt: 1,
+        createdBy: 1,
+      },
+      _id: 0,
+      role: 1,
+    },
+  ]);
+});
+
 const addMembersToProject = asyncHandler(async (req, res) => {
   // test
 });
 
 const deleteMember = asyncHandler(async (req, res) => {
-  // test
-});
-
-const getProjects = asyncHandler(async (req, res) => {
   // test
 });
 
