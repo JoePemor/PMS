@@ -34,7 +34,7 @@ const createProject = asyncHandler(async (req, res) => {
       new ApiResponse(
         201,
         { project, projectMember },
-        `project successfully created at ${Date.now()}`,
+        `project successfully created at ${new Date(Date.now())}`,
       ),
     );
 });
@@ -90,7 +90,7 @@ const deleteProject = asyncHandler(async (req, res) => {
         deletedTasks,
         deletedSubTasks,
       },
-      `project successfully deleted at ${Date.now()}`,
+      `project successfully deleted at ${new Date(Date.now())}`,
     ),
   );
 });
@@ -128,7 +128,7 @@ const updateProject = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         { updatedProject },
-        `project successfully updated at ${Date.now()}`,
+        `project successfully updated at ${new Date(Date.now())}`,
       ),
     );
 });
@@ -156,7 +156,7 @@ const getProjects = asyncHandler(async (req, res) => {
             },
           },
           {
-            $addfields: {
+            $addFields: {
               members: {
                 $size: "$projectmembers",
               },
@@ -166,32 +166,101 @@ const getProjects = asyncHandler(async (req, res) => {
       },
     },
     {
-      $unwind: "$project",
+      $unwind: "$projects",
     },
     {
       $project: {
-        _id: 1,
-        name: 1,
-        description: 1,
-        members: 1,
-        createdAt: 1,
-        createdBy: 1,
+        projects: {
+          _id: 1,
+          name: 1,
+          description: 1,
+          members: 1,
+          createdAt: 1,
+          createdBy: 1,
+        },
+        _id: 0,
+        role: 1,
       },
-      _id: 0,
-      role: 1,
     },
   ]);
-});
 
-const addMembersToProject = asyncHandler(async (req, res) => {
-  // test
-});
-
-const deleteMember = asyncHandler(async (req, res) => {
-  // test
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { project },
+        `projects successfully fetched at ${new Date(Date.now())}`,
+      ),
+    );
 });
 
 const getProjectById = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not Found", []);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { project },
+        `projects successfully fetched at ${new Date(Date.now())}`,
+      ),
+    );
+});
+
+const addMembersToProject = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  const { phoneNumber, email, role } = req.body;
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not Found", []);
+  }
+
+  const user = await User.findOne({
+    $or: [{ phoneNumber }, { email }],
+  });
+
+  if (!user) {
+    throw new ApiError(404, "user not Found", []);
+  }
+
+  await ProjectMember.findByIdAndUpdate(
+    {
+      user: new mongoose.Types.ObjectId(user._id),
+      project: new mongoose.Types.ObjectId(projectId),
+    },
+    {
+      user: new mongoose.Types.ObjectId(user._id),
+      project: new mongoose.Types.ObjectId(projectId),
+      role: role,
+    },
+    {
+      new: true,
+      upsert: true,
+    },
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        `projects member added at ${new Date(Date.now())}`,
+      ),
+    );
+});
+
+const deleteMember = asyncHandler(async (req, res) => {
   // test
 });
 
