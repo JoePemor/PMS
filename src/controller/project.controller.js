@@ -1,8 +1,8 @@
-import { User } from "../models/user.models.js";
-import { Project } from "../models/project.models.js";
-import { ProjectMember } from "../models/projectmember.models.js";
-import { Note } from "../models/note.models.js";
-import { Task } from "../models/task.models.js";
+import { User } from "../model/user.model.js";
+import { Project } from "../model/project.models.js";
+import { ProjectMember } from "../model/projectmember.models.js";
+import { Note } from "../model/note.models.js";
+import { Task } from "../model/task.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
@@ -204,6 +204,10 @@ const getProjectById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Project not Found", []);
   }
 
+  if (!mongoose.isValidObjectId(projectId)) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
   return res
     .status(200)
     .json(
@@ -217,7 +221,7 @@ const getProjectById = asyncHandler(async (req, res) => {
 
 const addMembersToProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { phoneNumber, email, role } = req.body;
+  const { email, role } = req.body;
 
   const project = await Project.findById(projectId);
 
@@ -225,15 +229,17 @@ const addMembersToProject = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Project not Found", []);
   }
 
-  const user = await User.findOne({
-    $or: [{ phoneNumber }, { email }],
-  });
+  if (!mongoose.isValidObjectId(projectId)) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const user = await User.findOne({ email });
 
   if (!user) {
     throw new ApiError(404, "user not Found", []);
   }
 
-  await ProjectMember.findByIdAndUpdate(
+  await ProjectMember.findOneAndUpdate(
     {
       user: new mongoose.Types.ObjectId(user._id),
       project: new mongoose.Types.ObjectId(projectId),
