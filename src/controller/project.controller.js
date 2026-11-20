@@ -197,14 +197,14 @@ const getProjects = asyncHandler(async (req, res) => {
 const getProjectById = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
+  if (!mongoose.isValidObjectId(projectId)) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
   const project = await Project.findById(projectId);
 
   if (!project) {
     throw new ApiError(404, "Project not Found", []);
-  }
-
-  if (!mongoose.isValidObjectId(projectId)) {
-    throw new ApiError(400, "invalid project credentials", []);
   }
 
   return res
@@ -222,14 +222,14 @@ const addMembersToProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { email, role } = req.body;
 
+  if (!mongoose.isValidObjectId(projectId)) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
   const project = await Project.findById(projectId);
 
   if (!project) {
     throw new ApiError(404, "Project not Found", []);
-  }
-
-  if (!mongoose.isValidObjectId(projectId)) {
-    throw new ApiError(400, "invalid project credentials", []);
   }
 
   const user = await User.findOne({ email });
@@ -315,8 +315,7 @@ const getProjectMembers = asyncHandler(async (req, res) => {
         project: 1,
         role: 1,
         createdAt: 1,
-        createdBy: 1,
-        _id: 0
+        _id: 0,
       },
     },
   ]);
