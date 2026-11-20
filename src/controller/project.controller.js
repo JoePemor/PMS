@@ -88,7 +88,6 @@ const deleteProject = asyncHandler(async (req, res) => {
         deletedMembers,
         deletedNotes,
         deletedTasks,
-        deletedSubTasks,
       },
       `project successfully deleted at ${new Date(Date.now())}`,
     ),
@@ -266,11 +265,74 @@ const addMembersToProject = asyncHandler(async (req, res) => {
     );
 });
 
-const deleteMember = asyncHandler(async (req, res) => {
-  // test
+const getProjectMembers = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.isValidObjectId(projectId)) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "project not found", []);
+  }
+
+  const projectMember = await ProjectMember.aggregate([
+    {
+      $match: {
+        project: new mongoose.Types.ObjectId(projectId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
+        pipeline: [
+          {
+            $project: {
+              email: 1,
+              username: 1,
+              avatar: 1,
+              _id: 0,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        user: {
+          $arrayElemAt: ["$user", 0],
+        },
+      },
+    },
+    {
+      $project: {
+        user: 1,
+        project: 1,
+        role: 1,
+        createdAt: 1,
+        createdBy: 1,
+        _id: 0
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { projectMember },
+        `projects members successfully fetch at ${new Date(Date.now())}`,
+      ),
+    );
 });
 
-const getProjectMembers = asyncHandler(async (req, res) => {
+const deleteMember = asyncHandler(async (req, res) => {
   // test
 });
 
