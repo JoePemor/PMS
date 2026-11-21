@@ -29,10 +29,12 @@ export default app;
 // importing route to application config
 import healthCheckerRouter from "./routes/healthcheck.routes.js";
 import testEmailSenderRouter from "./routes/test.routes.js";
-import registerUserRouter from "./routes/auth.routes.js"
+import authRouter from "./routes/auth.routes.js";
+import projectRouter from "./routes/project.routes.js";
 
 app.use("/api/v1/healthcheck", healthCheckerRouter);
 app.use("/api/v1/testmailer", testEmailSenderRouter);
-app.use("/api/v1/auth", registerUserRouter);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/projects", projectRouter);
 
 // app.js handles builds/configs of the Express application
