@@ -332,7 +332,49 @@ const getProjectMembers = asyncHandler(async (req, res) => {
 });
 
 const deleteMember = asyncHandler(async (req, res) => {
-  // test
+  const { projectId, userId } = req.params;
+
+  if (
+    !mongoose.isValidObjectId(projectId) &&
+    !mongoose.isValidObjectId(userId)
+  ) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const projectMember = await ProjectMember.findOne({
+    project: new mongoose.Types.ObjectId(projectId),
+    user: new mongoose.Types.ObjectId(userId),
+  });
+
+  if (!projectMember) {
+    throw new ApiError(404, "Project member not Found", []);
+  }
+
+  const reqestingUser = await ProjectMember.findOne({
+    user: new mongoose.Types.ObjectId(req.user?._id),
+  });
+
+  if (!reqestingUser) {
+    throw new ApiError(400, "User can't make request", []);
+  }
+
+  const deletedMember = await ProjectMember.findByIdAndDelete(
+    projectMember._id,
+  );
+
+  if (!deletedMember) {
+    throw new ApiError(400, "User not found", []);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { deletedMember },
+        `members deleted successfully at ${new Date(Date.now())}`,
+      ),
+    );
 });
 
 const updateMemberRole = asyncHandler(async (req, res) => {
