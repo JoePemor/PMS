@@ -7,7 +7,7 @@ import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import mongoose from "mongoose";
-import { UserRoleEnum } from "../utils/constants.js";
+import { UserRoleEnum, UserRoles } from "../utils/constants.js";
 
 const createProject = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
@@ -48,6 +48,15 @@ const deleteProject = asyncHandler(async (req, res) => {
 
   if (!mongoose.isValidObjectId(projectId)) {
     throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const reqestingUser = await ProjectMember.findOne({
+    user: new mongoose.Types.ObjectId(req.user?._id),
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+
+  if (!reqestingUser) {
+    throw new ApiError(400, "User can't make request", []);
   }
 
   const deletedProject = await Project.findByIdAndDelete(projectId);
@@ -104,6 +113,15 @@ const updateProject = asyncHandler(async (req, res) => {
 
   if (!mongoose.isValidObjectId(projectId)) {
     throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const reqestingUser = await ProjectMember.findOne({
+    user: new mongoose.Types.ObjectId(req.user?._id),
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+
+  if (!reqestingUser) {
+    throw new ApiError(400, "User can't make request", []);
   }
 
   const updatedProject = await Project.findByIdAndUpdate(
@@ -238,6 +256,15 @@ const addMembersToProject = asyncHandler(async (req, res) => {
     throw new ApiError(404, "user not Found", []);
   }
 
+  const reqestingUser = await ProjectMember.findOne({
+    user: new mongoose.Types.ObjectId(req.user?._id),
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+
+  if (!reqestingUser) {
+    throw new ApiError(400, "User can't make request", []);
+  }
+
   await ProjectMember.findOneAndUpdate(
     {
       user: new mongoose.Types.ObjectId(user._id),
@@ -352,6 +379,7 @@ const deleteMember = asyncHandler(async (req, res) => {
 
   const reqestingUser = await ProjectMember.findOne({
     user: new mongoose.Types.ObjectId(req.user?._id),
+    project: new mongoose.Types.ObjectId(projectId),
   });
 
   if (!reqestingUser) {
@@ -378,7 +406,46 @@ const deleteMember = asyncHandler(async (req, res) => {
 });
 
 const updateMemberRole = asyncHandler(async (req, res) => {
-  // test
+  const { projectId, userId } = req.params;
+  const { newRole } = req.body;
+
+  if (!UserRoles.includes(newRole)) {
+    throw new ApiError(400, "Invalid role provided", []);
+  }
+
+  const projectMember = await ProjectMember.findOne({
+    project: new mongoose.Types.ObjectId(projectId),
+    user: new mongoose.Types.ObjectId(userId),
+  });
+
+  if (!projectMember) {
+    throw new ApiError(404, "Project member not Found", []);
+  }
+
+  const reqestingUser = await ProjectMember.findOne({
+    user: new mongoose.Types.ObjectId(req.user?._id),
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+
+  if (!reqestingUser) {
+    throw new ApiError(400, "User can't make request", []);
+  }
+
+  const updatedMember = await ProjectMember.findByIdAndUpdate(
+    projectMember._id,
+    { role: newRole },
+    { new: true },
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { updatedMember },
+        `member role updated successfully at ${new Date(Date.now())}`,
+      ),
+    );
 });
 
 export {
