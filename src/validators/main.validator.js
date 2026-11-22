@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-import { UserRoles } from "../utils/constants.js";
+import { UserRoleEnum } from "../utils/constants.js";
 
 const userRegistrationValidator = () => {
   return [
@@ -100,7 +100,7 @@ const addMembersToProjectValidator = () => {
 
     body("role")
       .optional()
-      .isIn(UserRoles)
+      .isIn(UserRoleEnum.MEMBER)
       .withMessage(
         `Role must be one of: ${UserRoles.join(", ")}`,
       ),
