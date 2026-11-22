@@ -4,6 +4,7 @@ import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import jwt from "jsonwebtoken";
 import { toASCII } from "nodemailer/lib/punycode";
+import mongoose from "mongoose";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   const token =
@@ -32,7 +33,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 });
 
 export const roleBaseAccess = (role = []) => {
-  asyncHandler(async (req, res, next) => {
+  return asyncHandler(async (req, res, next) => {
     const { projectId } = req.params;
 
     if (!projectId) {
