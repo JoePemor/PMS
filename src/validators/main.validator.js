@@ -100,9 +100,9 @@ const addMembersToProjectValidator = () => {
 
     body("role")
       .optional()
-      .isIn(UserRoleEnum.MEMBER)
+      .isIn([UserRoleEnum.MEMBER])
       .withMessage(
-        `Role must be one of: ${UserRoles.join(", ")}`,
+        `Role must be one of: ${Object.values(UserRoleEnum).join(", ")}`,
       ),
   ];
 };

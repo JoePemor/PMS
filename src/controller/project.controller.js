@@ -3,6 +3,7 @@ import { Project } from "../model/project.models.js";
 import { ProjectMember } from "../model/projectmember.models.js";
 import { Note } from "../model/note.models.js";
 import { Task } from "../model/task.models.js";
+import { SubTask } from "../model/subtask.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
@@ -59,48 +60,69 @@ const deleteProject = asyncHandler(async (req, res) => {
     throw new ApiError(400, "User can't make request", []);
   }
 
-  const deletedProject = await Project.findByIdAndDelete(projectId);
+  const session = await mongoose.startSession();
 
-  if (!deletedProject) {
-    throw new ApiError(404, "project not found", []);
-  }
+  try {
+    let deletionResult = {};
 
-  const deletedMembers = await ProjectMember.deleteMany({
-    project: projectId,
-  });
+    await session.withTransaction(async () => {
+      const deletedProject = await Project.findByIdAndDelete(projectId, {
+        session,
+      });
 
-  if (!deletedMembers) {
-    throw new ApiError(404, "project members not found", []);
-  }
+      if (!deletedProject) {
+        throw new ApiError(404, "Project not found");
+      }
 
-  const deletedNotes = await Note.deleteMany({
-    project: projectId,
-  });
+      const deletedMembers = await ProjectMember.deleteMany(
+        { project: projectId },
+        { session },
+      );
 
-  if (!deletedNotes) {
-    throw new ApiError(404, "project notes not found", []);
-  }
+      const deletedNotes = await Note.deleteMany(
+        { project: projectId },
+        { session },
+      );
 
-  const deletedTasks = await Task.deleteMany({
-    project: projectId,
-  });
+      const tasks = await Task.find(
+        { project: projectId },
+        { _id: 1 },
+        { session },
+      );
 
-  if (!deletedTasks) {
-    throw new ApiError(404, "project tasks not found", []);
-  }
+      const taskIds = tasks.map((task) => task._id);
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      {
+      const deletedSubtasks = await SubTask.deleteMany(
+        { task: { $in: taskIds } },
+        { session },
+      );
+
+      const deletedTasks = await Task.deleteMany(
+        { project: projectId },
+        { session },
+      );
+
+      deletionResult = {
         deletedProject,
         deletedMembers,
         deletedNotes,
         deletedTasks,
-      },
-      `project successfully deleted at ${new Date(Date.now())}`,
-    ),
-  );
+        deletedSubtasks,
+      };
+
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          {
+            deletionResult,
+          },
+          `project successfully deleted at ${new Date(Date.now())}`,
+        ),
+      );
+    });
+  } finally {
+    await session.endSession();
+  }
 });
 
 const updateProject = asyncHandler(async (req, res) => {
