@@ -40,6 +40,10 @@ export const roleBaseAccess = (role = []) => {
       throw new ApiError(400, "Unable to find Project id", []);
     }
 
+    if (!mongoose.isValidObjectId(projectId)) {
+      throw new ApiError(400, "invalid project credentials", []);
+    }
+
     const projectMember = await ProjectMember.findOne({
       project: new mongoose.Types.ObjectId(projectId),
       user: new mongoose.Types.ObjectId(req.user._id),
