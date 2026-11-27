@@ -6,7 +6,7 @@ import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import mongoose from "mongoose";
-import { UserRoleEnum, UserRoles } from "../utils/constants.js";
+import { TaskStatuses } from "../utils/constants.js";
 
 const getTask = asyncHandler(async (req, res) => {
   const { projectId, taskId } = req.params;
@@ -155,7 +155,7 @@ const CreateTask = asyncHandler(async (req, res) => {
   const attachments = files.map((file) => {
     return {
       url: `${process.env.STORAGE_URL}/image/${file.filename}`,
-      mimeType: file.mimeType,
+      mimeType: file.mimetype,
       size: file.size,
     };
   });
@@ -204,7 +204,7 @@ const getTaskId = asyncHandler(async (req, res) => {
     .status(200)
     .json(
       new ApiResponse(
-        201,
+        200,
         { task },
         `task successfully fetched at ${new Date(Date.now())}`,
       ),
@@ -212,11 +212,192 @@ const getTaskId = asyncHandler(async (req, res) => {
 });
 
 const updateTask = asyncHandler(async (req, res) => {
-  // ok
+  const { projectId, taskId } = req.params;
+  const { title, description, assignedTo, status } = req.body;
+
+  if (
+    !mongoose.isValidObjectId(projectId) ||
+    !mongoose.isValidObjectId(taskId)
+  ) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found", []);
+  }
+
+  const task = await Task.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(taskId),
+      project: new mongoose.Types.ObjectId(projectId),
+    },
+    {
+      title,
+      description,
+      status,
+      project: new mongoose.Types.ObjectId(projectId),
+      assignedTo: assignedTo
+        ? new mongoose.Types.ObjectId(assignedTo)
+        : undefined,
+      assignedBy: new mongoose.Types.ObjectId(req.user?._id),
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!task) {
+    throw new ApiError(404, "Task not found", []);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { task },
+        `task successfully updated at ${new Date(Date.now())}`,
+      ),
+    );
 });
 
 const deleteTask = asyncHandler(async (req, res) => {
-  // ok
+  const { projectId, taskId } = req.params;
+
+  if (
+    !mongoose.isValidObjectId(projectId) ||
+    !mongoose.isValidObjectId(taskId)
+  ) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const task = await Task.findOneAndDelete({
+    _id: new mongoose.Types.ObjectId(taskId),
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+
+  if (!task) {
+    throw new ApiError(404, "Task not found", []);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { task },
+        `task successfully deleted at ${new Date(Date.now())}`,
+      ),
+    );
+});
+
+const UpdateStatus = asyncHandler(async (req, res) => {
+  const { projectId, taskId } = req.params;
+  const { status } = req.body;
+
+  if (
+    !mongoose.isValidObjectId(projectId) ||
+    !mongoose.isValidObjectId(taskId)
+  ) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found", []);
+  }
+
+  if (!TaskStatuses.includes(status)) {
+    throw new ApiError(400, "Invalid task status", []);
+  }
+
+  const task = await Task.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(taskId),
+      project: new mongoose.Types.ObjectId(projectId),
+    },
+    {
+      $set: { status },
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!task) {
+    throw new ApiError(404, "Task not found", []);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { task },
+        `task status successfully updated at ${new Date(Date.now())}`,
+      ),
+    );
+});
+
+const addAttachment = asyncHandler(async (req, res) => {
+  const { projectId, taskId } = req.params;
+
+  if (
+    !mongoose.isValidObjectId(projectId) ||
+    !mongoose.isValidObjectId(taskId)
+  ) {
+    throw new ApiError(400, "invalid project credentials", []);
+  }
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found", []);
+  }
+
+  const files = req.files || [];
+
+  if (!files.length) {
+    throw new ApiError(400, "No files uploaded", []);
+  }
+
+  const attachments = files.map((file) => {
+    return {
+      url: `${process.env.STORAGE_URL}/image/${file.filename}`,
+      mimeType: file.mimetype,
+      size: file.size,
+    };
+  });
+
+  const task = await Task.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(taskId),
+      project: new mongoose.Types.ObjectId(projectId),
+    },
+    {
+      $push: { attachment: { $each: attachments } },
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!task) {
+    throw new ApiError(404, "Task not found", []);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { task },
+        `attachments successfully added at ${new Date(Date.now())}`,
+      ),
+    );
 });
 
 export {
@@ -224,5 +405,7 @@ export {
   getTaskId,
   CreateTask,
   updateTask,
-  deleteTask
+  deleteTask,
+  UpdateStatus,
+  addAttachment,
 };

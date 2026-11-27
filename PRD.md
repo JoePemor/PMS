@@ -106,6 +106,8 @@ Project Camp Backend is a RESTful API service designed to support collaborative 
 
 - `GET /:projectId` - List project tasks (secured, role-based)
 - `POST /:projectId` - Create task (secured, Admin/Project Admin)
+- `PATCH /:projectId/t/:taskId/status` - Update task status only (secured, Admin/Project Admin)
+- `POST /:projectId/t/:taskId/attachments` - upload additional task attachment (secured, Admin/Project Admin)
 - `GET /:projectId/t/:taskId` - Get task details (secured, role-based)
 - `PUT /:projectId/t/:taskId` - Update task (secured, Admin/Project Admin)
 - `DELETE /:projectId/t/:taskId` - Delete task (secured, Admin/Project Admin)
