@@ -152,7 +152,7 @@ const CreateTask = asyncHandler(async (req, res) => {
 
   const files = req.files || [];
 
-  const attachments = files.map((file) => {
+  const attachment = files.map((file) => {
     return {
       url: `${process.env.STORAGE_URL}/image/${file.filename}`,
       mimeType: file.mimetype,
@@ -169,7 +169,7 @@ const CreateTask = asyncHandler(async (req, res) => {
       ? new mongoose.Types.ObjectId(assignedTo)
       : undefined,
     assignedBy: new mongoose.Types.ObjectId(req.user?._id),
-    attachments,
+    attachment,
   });
 
   return res
@@ -183,7 +183,7 @@ const CreateTask = asyncHandler(async (req, res) => {
     );
 });
 
-const getTaskId = asyncHandler(async (req, res) => {
+const getTaskById = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
   if (!mongoose.isValidObjectId(projectId)) {
@@ -364,7 +364,7 @@ const addAttachment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "No files uploaded", []);
   }
 
-  const attachments = files.map((file) => {
+  const attachment = files.map((file) => {
     return {
       url: `${process.env.STORAGE_URL}/image/${file.filename}`,
       mimeType: file.mimetype,
@@ -378,7 +378,7 @@ const addAttachment = asyncHandler(async (req, res) => {
       project: new mongoose.Types.ObjectId(projectId),
     },
     {
-      $push: { attachment: { $each: attachments } },
+      $push: { attachment: { $each: attachment } },
     },
     {
       new: true,
@@ -395,7 +395,7 @@ const addAttachment = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         { task },
-        `attachments successfully added at ${new Date(Date.now())}`,
+        `attachment successfully added at ${new Date(Date.now())}`,
       ),
     );
 });

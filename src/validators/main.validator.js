@@ -1,4 +1,5 @@
 import { body } from "express-validator";
+import { TaskStatuses } from "../utils/constants.js";
 import { UserRoleEnum } from "../utils/constants.js";
 
 const userRegistrationValidator = () => {
@@ -107,6 +108,144 @@ const addMembersToProjectValidator = () => {
   ];
 };
 
+const createTaskValidator = () => {
+  return [
+    body().custom((value) => {
+      const allowedFields = ["title", "description", "assignedTo", "status"];
+
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error("Request body must be a valid object");
+      }
+
+      const unexpectedFields = Object.keys(value).filter(
+        (field) => !allowedFields.includes(field),
+      );
+
+      if (unexpectedFields.length) {
+        throw new Error(`Unexpected fields: ${unexpectedFields.join(", ")}`);
+      }
+
+      return true;
+    }),
+
+    body("title")
+      .isString()
+      .withMessage("Task title must be a string")
+      .bail()
+      .trim()
+      .notEmpty()
+      .withMessage("Task title is required"),
+
+    body("description")
+      .optional()
+      .isString()
+      .withMessage("Task description must be a string")
+      .bail()
+      .trim(),
+
+    body("assignedTo")
+      .optional()
+      .isMongoId()
+      .withMessage("Invalid assignee ID"),
+
+    body("status")
+      .optional()
+      .isString()
+      .withMessage("Task status must be a string")
+      .bail()
+      .isIn(TaskStatuses)
+      .withMessage(`Task status must be one of: ${TaskStatuses.join(", ")}`),
+  ];
+};
+
+const updateTaskValidator = () => {
+  return [
+    body().custom((value) => {
+      const allowedFields = ["title", "description", "assignedTo", "status"];
+
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error("Request body must be a valid object");
+      }
+
+      const fields = Object.keys(value);
+
+      if (fields.length === 0) {
+        throw new Error("Provide at least one field to update");
+      }
+
+      const unexpectedFields = fields.filter(
+        (field) => !allowedFields.includes(field),
+      );
+
+      if (unexpectedFields.length) {
+        throw new Error(`Unexpected fields: ${unexpectedFields.join(", ")}`);
+      }
+
+      return true;
+    }),
+
+    body("title")
+      .optional()
+      .isString()
+      .withMessage("Task title must be a string")
+      .bail()
+      .trim()
+      .notEmpty()
+      .withMessage("Task title cannot be empty"),
+
+    body("description")
+      .optional()
+      .isString()
+      .withMessage("Task description must be a string")
+      .bail()
+      .trim(),
+
+    body("assignedTo")
+      .optional()
+      .isMongoId()
+      .withMessage("Invalid assignee ID"),
+
+    body("status")
+      .optional()
+      .isString()
+      .withMessage("Task status must be a string")
+      .bail()
+      .isIn(TaskStatuses)
+      .withMessage(`Task status must be one of: ${TaskStatuses.join(", ")}`),
+  ];
+};
+
+const updateTaskStatusValidator = () => {
+  return [
+    body().custom((value) => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error("Request body must be a valid object");
+      }
+
+      const fields = Object.keys(value);
+
+      if (fields.length !== 1 || fields[0] !== "status") {
+        throw new Error("Only the status field is allowed");
+      }
+
+      return true;
+    }),
+
+    body("status")
+      .isString()
+      .withMessage("Task status must be a string")
+      .bail()
+      .isIn(TaskStatuses)
+      .withMessage(`Task status must be one of: ${TaskStatuses.join(", ")}`),
+  ];
+};
+
+/**
+ * createTaskValidator,
+  updateTaskValidator,
+  updateTaskStatusValidator,
+ */
+
 export {
   userRegistrationValidator,
   userLoginValidator,
@@ -115,4 +254,7 @@ export {
   userResetForgotPasswordValidator,
   createProjectValidator,
   addMembersToProjectValidator,
+  createTaskValidator,
+  updateTaskValidator,
+  updateTaskStatusValidator,
 };
